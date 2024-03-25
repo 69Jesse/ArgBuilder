@@ -2,8 +2,8 @@ from typing import NamedTuple
 
 
 __all__ = (
-    'Arguments',
+    'BaseArguments',
 )
 
 
-Arguments = NamedTuple
+BaseArguments = NamedTuple
