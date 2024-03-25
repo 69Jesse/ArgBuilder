@@ -1,6 +1,6 @@
 from ..builder import Builder
 from ..utils import MISSING
-from .arguments_cls import Arguments
+from .arguments_cls import BaseArguments
 
 import os
 import sys
@@ -15,7 +15,7 @@ __all__ = (
 )
 
 
-NT = TypeVar('NT', bound=Arguments)
+NT = TypeVar('NT', bound=BaseArguments)
 
 
 def get_arguments(
