@@ -8,6 +8,11 @@ if TYPE_CHECKING:
     from ..builder import Builder
 
 
+__all__ = (
+    'Flag',
+)
+
+
 class Flag(ABC):
     @abstractmethod
     def allowed_parsed_argument_types(self) -> set[type['ParsedArgument']]:

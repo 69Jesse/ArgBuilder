@@ -32,7 +32,7 @@ def arg(
     allow_none: Literal[False] = False,
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
-    flags: Iterable[Flag] = MISSING,
+    flags: Flag | Iterable[Flag] = MISSING,
 ) -> T:
     ...
 
@@ -46,7 +46,7 @@ def arg(
     allow_none: Literal[True] = True,
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
-    flags: Iterable[Flag] = MISSING,
+    flags: Flag | Iterable[Flag] = MISSING,
 ) -> Optional[T]:
     ...
 
@@ -60,7 +60,7 @@ def arg(
     allow_none: bool = MISSING,
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
-    flags: Iterable[Flag] = MISSING,
+    flags: Flag | Iterable[Flag] = MISSING,
 ) -> Optional[T]:
     ...
 
@@ -73,7 +73,7 @@ def arg(
     allow_none: bool = MISSING,
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
-    flags: Iterable[Flag] = MISSING,
+    flags: Flag | Iterable[Flag] = MISSING,
 ) -> Optional[T]:
     argument = UnparsedArgument(
         description=description,

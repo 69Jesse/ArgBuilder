@@ -3,6 +3,10 @@ from ..flags import (
     GreaterThanOrEqualFlag,
     LessThanFlag,
     LessThanOrEqualFlag,
+    ExistsFlag,
+    DoesNotExistFlag,
+    IsDirFlag,
+    IsFileFlag,
 )
 
 from typing import final
@@ -24,3 +28,7 @@ class Flag:
     LessThanOrEqual = LessThanOrEqualFlag
     GreaterThan = GreaterThanFlag
     GreaterThanOrEqual = GreaterThanOrEqualFlag
+    Exists = ExistsFlag
+    DoesNotExist = DoesNotExistFlag
+    IsDir = IsDirFlag
+    IsFile = IsFileFlag

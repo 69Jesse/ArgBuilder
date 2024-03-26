@@ -44,7 +44,7 @@ class UnparsedArgument:
         allow_none: bool = MISSING,
         options: Iterable[AllowedTypes] = MISSING,
         flag: Flag = MISSING,
-        flags: Iterable[Flag] = MISSING,
+        flags: Flag | Iterable[Flag] = MISSING,
     ) -> None:
         self.description = description if description is not MISSING else None
         self._type = type if type is not MISSING else None
@@ -57,6 +57,8 @@ class UnparsedArgument:
             if flags is not MISSING:
                 raise ValueError('Cannot use both flag and flags')
             self.flags = [flag]
+        if isinstance(flags, Flag):
+            flags = [flags]
         self.flags = list(flags) if flags is not MISSING else []
 
     def _check_description(

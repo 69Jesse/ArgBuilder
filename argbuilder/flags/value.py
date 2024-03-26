@@ -15,6 +15,14 @@ if TYPE_CHECKING:
     from ..builder import Builder
 
 
+__all__ = (
+    'LessThanFlag',
+    'LessThanOrEqualFlag',
+    'GreaterThanFlag',
+    'GreaterThanOrEqualFlag',
+)
+
+
 class ValueFlag(Flag):
     value: int | float
     def __init__(
