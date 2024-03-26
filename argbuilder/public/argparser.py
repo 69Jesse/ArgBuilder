@@ -48,21 +48,21 @@ class ArgParser(NamedTuple):
         @classmethod
         def parse_args(
             cls,
+            description: str = 'No description provided',
             *,
             name: str = MISSING,
-            description: str = 'No description provided',
             author: str = '69Jesse',
         ) -> Self:
             ...
     else:
         @staticmethod
         def parse_args(
-            cls: Self,
+            cls: type[NT],
+            description: str = 'No description provided',
             *,
             name: str = MISSING,
-            description: str = 'No description provided',
             author: str = '69Jesse',
-        ) -> Self:
+        ) -> NT:
             name = name if name is not MISSING else os.path.basename(sys.argv[0]).rsplit('.', 1)[0]
             builder = Builder.from_named_tuple_cls(
                 named_tuple_cls=cls,
