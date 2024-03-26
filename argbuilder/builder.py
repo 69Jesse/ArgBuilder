@@ -109,7 +109,7 @@ class Builder(Generic[NT]):
     ) -> 'Builder[NT]':
         for key, value in vars(named_tuple_cls).items():
             if isinstance(value, UnparsedArgument):
-                raise ValueError(f'{key!r} must have a type annotation. Example:\n\t{key}: int = argument(...)')
+                raise ValueError(f'{key!r} must have a type annotation. Example:\n\t{key}: int = arg(...)')
 
         arguments: list[ParsedArgument] = []
 
