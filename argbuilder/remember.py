@@ -96,7 +96,6 @@ def create_memories_mapping(
     }
     mapping: dict['ParsedArgument[Any]', tuple[str, bool]] = {}
     for i, (name, value) in enumerate(zip(names, values)):
-        print(i, bit_is_set(memorized, i), name)
         if not bit_is_set(memorized, i):
             continue
         assert name is not None and value is not None
@@ -156,9 +155,7 @@ def maybe_remember_before(builder: 'Builder[Any]') -> None:
     memory = maybe_fetch_memory(builder)
     if memory is None:
         return
-    print(json.dumps(memory, indent=2))
     mapping = create_memories_mapping(memory, arguments)
-    print(mapping, len(mapping))
     for argument, (value, is_none) in mapping.items():
         argument.string_value = value
         argument.is_none = is_none
