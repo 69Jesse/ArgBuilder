@@ -172,6 +172,7 @@ class Builder(Generic[NT]):
                     allow_none=unparsed.allow_none,
                     options=unparsed.options,  # type: ignore
                     flags=unparsed.flags,
+                    remember=unparsed.remember,
                 )
                 arguments.append(argument)
             except ValueError as exc:

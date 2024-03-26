@@ -43,6 +43,7 @@ class ParsedArgument(ABC, Generic[Value]):
     value_is_default: bool
     options: Optional[list[Value]]
     flags: list['Flag']
+    remember: Optional[bool]
     def __init__(
         self,
         *,
@@ -54,6 +55,7 @@ class ParsedArgument(ABC, Generic[Value]):
         allow_none: bool,
         options: Optional[list[Value]],
         flags: Optional[list['Flag']],
+        remember: Optional[bool],
     ) -> None:
         self.name = name
         self.description = description
@@ -66,6 +68,7 @@ class ParsedArgument(ABC, Generic[Value]):
         self.value_is_default = self.has_default
         self.options = options
         self.flags = flags or []
+        self.remember = remember
         self.after_init()
 
     @property
