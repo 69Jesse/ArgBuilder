@@ -1,6 +1,7 @@
 # I am terribly sorry
 from ..builder import Builder
 from ..utils import MISSING
+from ..remember import RememberMode
 
 import os
 import sys
@@ -24,26 +25,30 @@ __all__ = (
 NT = TypeVar('NT', bound=NamedTuple)
 
 
-def parse_args(
-    cls: type[NT],
-    *,
-    name: str = MISSING,
-    description: str = 'No description provided',
-    author: str = '69Jesse',
-) -> NT:
-    name = name if name is not MISSING else os.path.basename(sys.argv[0]).rsplit('.', 1)[0]
-    builder = Builder.from_named_tuple_cls(
-        named_tuple_cls=cls,
-        name=name,
-        description=description,
-        author=author,
-    )
-    while not builder.finished:
-        builder.iterate()
-    return builder.create_named_tuple()
-
-
 class ArgParser(NamedTuple):
+    @staticmethod
+    def __parse_args(
+        named_tuple_cls: type[NT],
+        description: str = 'No description provided',
+        *,
+        name: str = MISSING,
+        author: str = '69Jesse',
+        remember: bool | RememberMode = False,
+    ) -> NT:
+        name = name if name is not MISSING else os.path.basename(sys.argv[0]).rsplit('.', 1)[0]
+        if isinstance(remember, bool):
+            remember = RememberMode.ALL if remember else RememberMode.NONE
+        builder = Builder.from_named_tuple_cls(
+            named_tuple_cls=named_tuple_cls,
+            name=name,
+            description=description,
+            author=author,
+            remember_mode=remember,
+        )
+        while not builder.finished:
+            builder.iterate()
+        return builder.create_named_tuple()
+
     if TYPE_CHECKING:
         @classmethod
         def parse_args(
@@ -52,27 +57,12 @@ class ArgParser(NamedTuple):
             *,
             name: str = MISSING,
             author: str = '69Jesse',
+            remember: bool | RememberMode = False,
         ) -> Self:
             ...
     else:
-        @staticmethod
-        def parse_args(
-            cls: type[NT],
-            description: str = 'No description provided',
-            *,
-            name: str = MISSING,
-            author: str = '69Jesse',
-        ) -> NT:
-            name = name if name is not MISSING else os.path.basename(sys.argv[0]).rsplit('.', 1)[0]
-            builder = Builder.from_named_tuple_cls(
-                named_tuple_cls=cls,
-                name=name,
-                description=description,
-                author=author,
-            )
-            while not builder.finished:
-                builder.iterate()
-            return builder.create_named_tuple()
+        parse_args = __parse_args
+
 
 if not TYPE_CHECKING:
     old_arg_parser = ArgParser

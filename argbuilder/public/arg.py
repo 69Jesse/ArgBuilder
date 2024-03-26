@@ -33,6 +33,7 @@ def arg(
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
+    remember: bool = MISSING,
 ) -> T:
     ...
 
@@ -47,6 +48,7 @@ def arg(
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
+    remember: bool = MISSING,
 ) -> Optional[T]:
     ...
 
@@ -61,6 +63,7 @@ def arg(
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
+    remember: bool = MISSING,
 ) -> Optional[T]:
     ...
 
@@ -74,6 +77,7 @@ def arg(
     options: Iterable[T] = MISSING,
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
+    remember: bool = MISSING,
 ) -> Optional[T]:
     argument = UnparsedArgument(
         description=description,

@@ -15,6 +15,7 @@ from .utils import (
     colour,
     random_rgb_neon_colour,
 )
+from .remember import RememberMode, maybe_remember_before, maybe_remember_after
 
 import time
 from enum import Enum
@@ -66,6 +67,7 @@ class Builder(Generic[NT]):
     description: str
     author: str
     arguments: list[ParsedArgument[Any]]
+    remember_mode: RememberMode
     started: bool
     finished: bool
     index: int
@@ -83,12 +85,14 @@ class Builder(Generic[NT]):
         description: str,
         author: str,
         arguments: list[ParsedArgument],
+        remember_mode: RememberMode,
     ) -> None:
         self.named_tuple_cls = named_tuple_cls
         self.name = name
         self.description = description
         self.author = author
         self.arguments = arguments
+        self.remember_mode = remember_mode
         self.started = False
         self.finished = False
         self.index = 0
@@ -98,6 +102,7 @@ class Builder(Generic[NT]):
         self.previous_string_values = []
         self.reversed_string_values = []
         self.previous_input = None
+        maybe_remember_before(self)
 
     @staticmethod
     def from_named_tuple_cls(
@@ -106,6 +111,7 @@ class Builder(Generic[NT]):
         name: str,
         description: str,
         author: str,
+        remember_mode: RememberMode,
     ) -> 'Builder[NT]':
         for key, value in vars(named_tuple_cls).items():
             if isinstance(value, UnparsedArgument):
@@ -177,6 +183,7 @@ class Builder(Generic[NT]):
             description=description,
             author=author,
             arguments=arguments,
+            remember_mode=remember_mode,
         )
 
     def get_terminal_width(self) -> int:
@@ -390,4 +397,5 @@ class Builder(Generic[NT]):
     def on_finish(self) -> None:
         self.finished = True
         self.index = -1
+        maybe_remember_after(self)
         self.display()
