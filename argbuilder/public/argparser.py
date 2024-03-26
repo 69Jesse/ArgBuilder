@@ -37,7 +37,7 @@ class ArgParser(NamedTuple):
     ) -> NT:
         name = name if name is not MISSING else os.path.basename(sys.argv[0]).rsplit('.', 1)[0]
         if isinstance(remember, bool):
-            remember = RememberMode.ALL if remember else RememberMode.NONE
+            remember = RememberMode.EVERYWHERE if remember else RememberMode.NONE
         builder = Builder.from_named_tuple_cls(
             named_tuple_cls=named_tuple_cls,
             name=name,

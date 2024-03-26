@@ -33,6 +33,7 @@ class UnparsedArgument:
     allow_none: Optional[bool]
     options: Optional[list[AllowedTypes]]
     flags: list[Flag]
+    remember: Optional[bool]
     field_name: str
     def __init__(
         self,
@@ -45,6 +46,7 @@ class UnparsedArgument:
         options: Iterable[AllowedTypes] = MISSING,
         flag: Flag = MISSING,
         flags: Flag | Iterable[Flag] = MISSING,
+        remember: bool = MISSING,
     ) -> None:
         self.description = description if description is not MISSING else None
         self._type = type if type is not MISSING else None
@@ -60,6 +62,7 @@ class UnparsedArgument:
         if isinstance(flags, Flag):
             flags = [flags]
         self.flags = list(flags) if flags is not MISSING else []
+        self.remember = remember if remember is not MISSING else None
 
     def _check_description(
         self,

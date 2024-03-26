@@ -88,6 +88,7 @@ def arg(
         options=options,
         flag=flag,
         flags=flags,
+        remember=remember,
     )
     return argument  # type: ignore
 
