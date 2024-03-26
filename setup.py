@@ -5,12 +5,12 @@ from setuptools import (
 
 
 setup(
-    name='scriptbuilder',
+    name='argbuilder',
     author='Jesse Janssen',
-    url='https://github.com/69Jesse/Aliases/tree/main/scripts/builder',
+    url='https://github.com/69Jesse/ArgBuilder',
     version='0.2',
     packages=find_packages(),
-    description='Arguments builder for creating console scripts',
+    description='Arguments builder for creating console applications',
     python_requires='>=3.12',
     include_package_data=True,
 )
