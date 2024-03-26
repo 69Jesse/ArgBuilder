@@ -15,7 +15,7 @@ from typing import (
 
 
 __all__ = (
-    'argument',
+    'arg',
 )
 
 
@@ -23,7 +23,7 @@ T = TypeVar('T', bound=AllowedTypes)
 
 
 @overload
-def argument(
+def arg(
     description: str = MISSING,
     *,
     type: type[T] = MISSING,
@@ -37,7 +37,7 @@ def argument(
     ...
 
 @overload
-def argument(
+def arg(
     description: str = MISSING,
     *,
     type: type[T] = MISSING,
@@ -51,7 +51,7 @@ def argument(
     ...
 
 @overload
-def argument(
+def arg(
     description: str = MISSING,
     *,
     type: type[T] = MISSING,
@@ -64,7 +64,7 @@ def argument(
 ) -> Optional[T]:
     ...
 
-def argument(
+def arg(
     description: str = MISSING,
     *,
     type: type[T] = MISSING,
