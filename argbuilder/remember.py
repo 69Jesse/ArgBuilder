@@ -29,8 +29,8 @@ class Memory(TypedDict):
 
 
 class MemoryFileJson(TypedDict):
-    everywhere_memory: Optional[Memory]
-    memories: NotRequired[dict[str, Memory]]
+    everywhere_memory: NotRequired[Optional[Memory]]
+    cwd_memories: NotRequired[dict[str, Memory]]
 
 
 ALLOWED_CHARS: frozenset[str] = frozenset('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_')
@@ -38,15 +38,16 @@ def normalize_name(name: str) -> str:
     return ''.join(char for char in name if char in ALLOWED_CHARS) or 'script'
 
 
-def fetch_json(path: Path) -> dict[str, Any]:
+def fetch_json(name: str) -> MemoryFileJson:
+    name = normalize_name(name)
+    path = MEMORY_FOLDER / f'{name}.json'
     with path.open(encoding='utf-8') as file:
         return json.load(file)
 
 
 def get_memories(builder: 'Builder[Any]') -> dict['ParsedArgument[Any]', tuple[str, bool]]:
-    name = normalize_name(builder.name)
     try:
-        data = fetch_json(MEMORY_FOLDER / f'{name}.json')
+        data = fetch_json(builder.name)
     except FileNotFoundError:
         return {}
     ... # TODO OOOOO
