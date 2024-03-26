@@ -21,6 +21,8 @@ class StringArgument(ParsedArgument[str]):
         *,
         builder: 'Builder[Any]',
     ) -> str:
+        if not self.string_value:
+            raise ValueError('Empty string is not allowed')
         return self.string_value
 
     def raw_display(

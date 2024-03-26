@@ -23,6 +23,8 @@ class PathArgument(ParsedArgument[Path]):
         *,
         builder: 'Builder[Any]',
     ) -> Path:
+        if not self.string_value:
+            raise ValueError('Empty path is not allowed')
         return Path(self.string_value)
 
     def raw_display(
