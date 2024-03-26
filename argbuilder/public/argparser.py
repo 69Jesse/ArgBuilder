@@ -17,7 +17,7 @@ __all__ = (
 
 class ArgParser(NamedTuple):
     @classmethod
-    def parse(
+    def parse_args(
         cls,
         *,
         name: str = MISSING,
