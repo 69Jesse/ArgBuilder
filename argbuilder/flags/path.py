@@ -18,14 +18,6 @@ __all__ = (
 
 
 class PathFlag(Flag):
-    value: int | float
-    def __init__(
-        self,
-        value: int | float,
-        /,
-    ) -> None:
-        self.value = value
-
     def allowed_parsed_argument_types(self) -> set[type[ParsedArgument]]:
         return {PathArgument,}
 
@@ -41,7 +33,7 @@ class ExistsFlag(PathFlag):
         return argument.raw_get_value(builder=builder).exists()
 
     def __str__(self) -> str:
-        return f'<{self.value}'
+        return 'Exists'
 
 
 @final
@@ -55,7 +47,7 @@ class DoesNotExistFlag(PathFlag):
         return not ExistsFlag.check_maybe_raise(self, argument, builder=builder)  # type: ignore
 
     def __str__(self) -> str:
-        return f'!{self.value}'
+        return 'Doesn\'t Exist'
 
 
 @final
@@ -69,7 +61,7 @@ class IsDirFlag(PathFlag):
         return argument.raw_get_value(builder=builder).is_dir()
 
     def __str__(self) -> str:
-        return f'[{self.value}'
+        return 'Is Dir'
 
 
 @final
@@ -83,4 +75,4 @@ class IsFileFlag(PathFlag):
         return argument.raw_get_value(builder=builder).is_file()
 
     def __str__(self) -> str:
-        return f']{self.value}'
+        return 'Is File'
