@@ -31,8 +31,8 @@ class RememberMode(Enum):
 class Memory(TypedDict):
     memorized: int
     are_none: int
-    names: list[str]
-    values: list[str]
+    names: list[Optional[str]]
+    values: list[Optional[str]]
 
 
 class MemoryFileJson(TypedDict):
@@ -88,16 +88,18 @@ def create_memories_mapping(
 ) -> dict['ParsedArgument[Any]', tuple[str, bool]]:
     memorized: int = memory.get('memorized', 0)
     are_none: int = memory.get('are_none', 0)
-    names: list[str] = memory.get('names', [])
-    values: list[str] = memory.get('values', [])
+    names: list[Optional[str]] = memory.get('names', [])
+    values: list[Optional[str]] = memory.get('values', [])
     name_to_argument: dict[str, 'ParsedArgument[Any]'] = {
         normalize_name(argument.name): argument
         for argument in arguments
     }
     mapping: dict['ParsedArgument[Any]', tuple[str, bool]] = {}
     for i, (name, value) in enumerate(zip(names, values)):
+        print(i, bit_is_set(memorized, i), name)
         if not bit_is_set(memorized, i):
             continue
+        assert name is not None and value is not None
         argument = name_to_argument.get(name, None)
         if argument is None:
             continue
@@ -119,6 +121,9 @@ def create_memory(builder: 'Builder[Any]') -> Memory:
             memory['are_none'] |= argument.is_none << i
             memory['names'].append(normalize_name(argument.name))
             memory['values'].append(argument.string_value)
+        else:
+            memory['names'].append(None)
+            memory['values'].append(None)
     return memory
 
 
@@ -151,7 +156,9 @@ def maybe_remember_before(builder: 'Builder[Any]') -> None:
     memory = maybe_fetch_memory(builder)
     if memory is None:
         return
+    print(json.dumps(memory, indent=2))
     mapping = create_memories_mapping(memory, arguments)
+    print(mapping, len(mapping))
     for argument, (value, is_none) in mapping.items():
         argument.string_value = value
         argument.is_none = is_none
