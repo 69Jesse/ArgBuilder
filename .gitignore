@@ -161,4 +161,5 @@ cython_debug/
 
 # Debugging
 install.bat
+package.bat
 test/
