@@ -66,15 +66,15 @@ class BooleanArgument(ParsedArgument[bool]):
         *,
         builder: 'Builder[Any]',
     ) -> None:
-        if special_key is SpecialKey.backspace:
+        if special_key is SpecialKey.BACKSPACE:
             self.string_value = ''
             if len(self.string_value) == 0 and self.allow_none:
                 self.is_none = not self.is_none
             return
-        if special_key is SpecialKey.left:
+        if special_key is SpecialKey.LEFT:
             if len(self.string_value) == 0 and self.allow_none:
                 self.is_none = not self.is_none
-        if special_key is SpecialKey.left or special_key is SpecialKey.right:
+        if special_key is SpecialKey.LEFT or special_key is SpecialKey.RIGHT:
             self.string_value = '1' if self.string_value != '1' else '0'
             return
         raise ValueError(f'Unsupported special key {special_key}')

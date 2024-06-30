@@ -33,7 +33,7 @@ class UnparsedArgument:
     allow_none: Optional[bool]
     options: Optional[list[AllowedTypes]]
     flags: list[Flag]
-    remember: Optional[bool]
+    remember: Optional[bool | int]
     field_name: str
     def __init__(
         self,
@@ -46,7 +46,7 @@ class UnparsedArgument:
         options: Iterable[AllowedTypes] = MISSING,
         flag: Flag = MISSING,
         flags: Flag | Iterable[Flag] = MISSING,
-        remember: bool = MISSING,
+        remember: bool | int = MISSING,
     ) -> None:
         self.description = description if description is not MISSING else None
         self._type = type if type is not MISSING else None
@@ -58,7 +58,7 @@ class UnparsedArgument:
         if flag is not MISSING:
             if flags is not MISSING:
                 raise ValueError('Cannot use both flag and flags')
-            self.flags = [flag]
+            flags = [flag]
         if isinstance(flags, Flag):
             flags = [flags]
         self.flags = list(flags) if flags is not MISSING else []
@@ -184,6 +184,7 @@ class UnparsedArgument:
         index: int,
         parsed_arguments: list[ParsedArgument[AllowedTypes]],
     ) -> None:
+        # TODO
         ...
 
     def _check_options(

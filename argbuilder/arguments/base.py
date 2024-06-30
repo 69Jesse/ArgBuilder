@@ -43,7 +43,7 @@ class ParsedArgument(ABC, Generic[Value]):
     value_is_default: bool
     options: Optional[list[Value]]
     flags: list['Flag']
-    remember: Optional[bool]
+    remember: Optional[bool | int]
     def __init__(
         self,
         *,
@@ -55,7 +55,7 @@ class ParsedArgument(ABC, Generic[Value]):
         allow_none: bool,
         options: Optional[list[Value]],
         flags: Optional[list['Flag']],
-        remember: Optional[bool],
+        remember: Optional[bool | int],
     ) -> None:
         self.name = name
         self.description = description
@@ -294,28 +294,28 @@ class ParsedArgument(ABC, Generic[Value]):
         *,
         builder: 'Builder[Any]',
     ) -> bool:
-        if special_key is SpecialKey.backspace:
+        if special_key is SpecialKey.BACKSPACE:
             self._regular_backspace(builder=builder)
             return True
-        if special_key is SpecialKey.ctrl_backspace:
+        if special_key is SpecialKey.CTRL_BACKSPACE:
             self._regular_ctrl_backspace(builder=builder)
             return True
-        if special_key is SpecialKey.delete:
+        if special_key is SpecialKey.DELETE:
             self._regular_delete(builder=builder)
             return True
-        if special_key is SpecialKey.ctrl_delete:
+        if special_key is SpecialKey.CTRL_DELETE:
             self._regular_ctrl_delete(builder=builder)
             return True
-        if special_key is SpecialKey.left:
+        if special_key is SpecialKey.LEFT:
             self._regular_left(builder=builder)
             return True
-        if special_key is SpecialKey.ctrl_left:
+        if special_key is SpecialKey.CTRL_LEFT:
             self._regular_ctrl_left(builder=builder)
             return True
-        if special_key is SpecialKey.right:
+        if special_key is SpecialKey.RIGHT:
             self._regular_right(builder=builder)
             return True
-        if special_key is SpecialKey.ctrl_right:
+        if special_key is SpecialKey.CTRL_RIGHT:
             self._regular_ctrl_right(builder=builder)
             return True
         return False
@@ -328,10 +328,10 @@ class ParsedArgument(ABC, Generic[Value]):
     ) -> bool:
         result: bool = self._regular_special_key(special_key, builder=builder)
         if result and special_key in (
-            SpecialKey.left,
-            SpecialKey.ctrl_left,
-            SpecialKey.right,
-            SpecialKey.ctrl_right,
+            SpecialKey.LEFT,
+            SpecialKey.CTRL_LEFT,
+            SpecialKey.RIGHT,
+            SpecialKey.CTRL_RIGHT,
         ):
             builder.higher_inner_index = builder.inner_index
         return result

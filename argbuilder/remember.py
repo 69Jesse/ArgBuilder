@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 import json
+import time
 
 from typing import TYPE_CHECKING, Any, TypedDict, Optional
 if TYPE_CHECKING:
@@ -27,12 +28,21 @@ class RememberMode(Enum):
     CWD = 1
     NONE = 2
 
+    @classmethod
+    def EVERYWHERE_WITH_DURATION(cls, seconds: int) -> tuple['RememberMode', int]:
+        return (cls.EVERYWHERE, seconds)
+
+    @classmethod
+    def CWD_WITH_DURATION(cls, seconds: int) -> tuple['RememberMode', int]:
+        return (cls.CWD, seconds)
+
 
 class Memory(TypedDict):
     memorized: int
     are_none: int
     names: list[Optional[str]]
     values: list[Optional[str]]
+    timestamp: int
 
 
 class MemoryFileJson(TypedDict):
@@ -73,13 +83,21 @@ def maybe_fetch_memory(builder: 'Builder[Any]') -> Optional[Memory]:
     except FileNotFoundError:
         return None
 
-    mode = builder.remember_mode if builder.remember_mode is not RememberMode.NONE else RememberMode.EVERYWHERE
+    mode, timestamp = builder.remember_data if builder.remember_data[0] is not RememberMode.NONE else (RememberMode.EVERYWHERE, builder.remember_data[1])
     if mode is RememberMode.EVERYWHERE:
-        return data.get('everywhere_memory', None)
+        memory = data.get('everywhere_memory', None)
     elif mode is RememberMode.CWD:
-        return data.get('cwd_memories', {}).get(get_cwd(), None)
+        memory = data.get('cwd_memories', {}).get(get_cwd(), None)
     else:
         raise ValueError(f'Invalid remember mode {mode!r}')
+    if memory is None:
+        return None
+
+    now = int(time.time())
+    if timestamp != -1 and memory.get('timestamp', now) < now - timestamp:
+        return None
+
+    return memory
 
 
 def create_memories_mapping(
@@ -94,13 +112,16 @@ def create_memories_mapping(
         normalize_name(argument.name): argument
         for argument in arguments
     }
-    mapping: dict['ParsedArgument[Any]', tuple[str, bool]] = {}
+    now: int = int(time.time())
+    mapping: dict['ParsedArgument[Any]', tuple[str, bool]] = {}  # {argument: (value, is_none)}
     for i, (name, value) in enumerate(zip(names, values)):
         if not bit_is_set(memorized, i):
             continue
         assert name is not None and value is not None
         argument = name_to_argument.get(name, None)
         if argument is None:
+            continue
+        if isinstance(argument.remember, int) and now - memory.get('timestamp', now) > argument.remember:
             continue
         mapping[argument] = (value, bit_is_set(are_none, i))
     return mapping
@@ -112,9 +133,10 @@ def create_memory(builder: 'Builder[Any]') -> Memory:
         'are_none': 0,
         'names': [],
         'values': [],
+        'timestamp': int(time.time()),
     }
     for i, argument in enumerate(builder.arguments):
-        remember = argument.remember if argument.remember is not None else (builder.remember_mode is not RememberMode.NONE)
+        remember = argument.remember if argument.remember is not None else (builder.remember_data[0] is not RememberMode.NONE)
         if remember:
             memory['memorized'] |= 1 << i
             memory['are_none'] |= argument.is_none << i
@@ -132,7 +154,7 @@ def update_data(builder: 'Builder[Any]', memory: Memory) -> None:
         data = fetch_json(builder.name)
     except FileNotFoundError:
         data = {}  # type: ignore
-    mode = builder.remember_mode if builder.remember_mode is not RememberMode.NONE else RememberMode.EVERYWHERE
+    mode, _ = builder.remember_data if builder.remember_data[0] is not RememberMode.NONE else (RememberMode.EVERYWHERE, builder.remember_data[1])
     if mode is RememberMode.EVERYWHERE:
         data['everywhere_memory'] = memory
         data['cwd_memories'] = {}
@@ -146,7 +168,7 @@ def update_data(builder: 'Builder[Any]', memory: Memory) -> None:
 
 def maybe_remember_before(builder: 'Builder[Any]') -> None:
     arguments: set['ParsedArgument[Any]']
-    if builder.remember_mode is RememberMode.NONE:
+    if builder.remember_data[0] is RememberMode.NONE:
         arguments = set(argument for argument in builder.arguments if argument.remember)
     else:
         arguments = set(argument for argument in builder.arguments if argument.remember is not False)

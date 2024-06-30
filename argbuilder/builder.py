@@ -67,7 +67,7 @@ class Builder(Generic[NT]):
     description: str
     author: str
     arguments: list[ParsedArgument[Any]]
-    remember_mode: RememberMode
+    remember_data: tuple[RememberMode, int]  # (mode, duration)  # duration in seconds, -1 for infinite
     started: bool
     finished: bool
     index: int
@@ -85,24 +85,24 @@ class Builder(Generic[NT]):
         description: str,
         author: str,
         arguments: list[ParsedArgument],
-        remember_mode: RememberMode,
+        remember_data: tuple[RememberMode, int],
     ) -> None:
         self.named_tuple_cls = named_tuple_cls
         self.name = name
         self.description = description
         self.author = author
         self.arguments = arguments
-        self.remember_mode = remember_mode
+        self.remember_data = remember_data
         self.started = False
         self.finished = False
         self.index = 0
-        self.inner_index = 0
         self.higher_inner_index = 0
         self.last_text_line_count = -1
         self.previous_string_values = []
         self.reversed_string_values = []
         self.previous_input = None
         maybe_remember_before(self)
+        self.inner_index = self.highest_inner_index_from_current_selected()
 
     @staticmethod
     def from_named_tuple_cls(
@@ -111,7 +111,7 @@ class Builder(Generic[NT]):
         name: str,
         description: str,
         author: str,
-        remember_mode: RememberMode,
+        remember_mode: tuple[RememberMode, int],
     ) -> 'Builder[NT]':
         for key, value in vars(named_tuple_cls).items():
             if isinstance(value, UnparsedArgument):
@@ -124,10 +124,8 @@ class Builder(Generic[NT]):
                 unparsed: Any = named_tuple_cls._field_defaults.get(field_name, None)
                 if unparsed is None:
                     unparsed = UnparsedArgument()
-                if isinstance(unparsed, str):
-                    unparsed = UnparsedArgument(description=unparsed)
-                if not isinstance(unparsed, UnparsedArgument):
-                    raise ValueError(f'Expected {UnparsedArgument.__name__!r} for the default value but got {unparsed.__class__.__name__!r}')
+                elif not isinstance(unparsed, UnparsedArgument):
+                    unparsed = UnparsedArgument(default=unparsed)
                 unparsed.check_everything(
                     named_tuple_cls=named_tuple_cls,
                     index=index,
@@ -184,7 +182,7 @@ class Builder(Generic[NT]):
             description=description,
             author=author,
             arguments=arguments,
-            remember_mode=remember_mode,
+            remember_data=remember_mode,
         )
 
     def get_terminal_width(self) -> int:
@@ -301,11 +299,12 @@ class Builder(Generic[NT]):
         before: tuple[str, bool],
         after: tuple[str, bool],
     ) -> None:
+        # TODO maybe add Command design pattern??
         if len(after) > 0:
             self.selected_argument().is_none = False
         if self.previous_input not in (
-            SpecialKey.ctrl_z,
-            SpecialKey.ctrl_y,
+            SpecialKey.CTRL_Z,
+            SpecialKey.CTRL_Y,
         ):
             self.reversed_string_values = []
             previous_entry: Optional[tuple[str, bool, int, float]] = self.previous_string_values[-1] if self.previous_string_values else None
@@ -338,21 +337,24 @@ class Builder(Generic[NT]):
         argument.is_none = is_none
         self.previous_string_values.append(entry)
 
+    def highest_inner_index_from_current_selected(self) -> int:
+        return len(self.arguments[self.index].display(builder=self))
+
     def handle_special_key(self, special_key: SpecialKey) -> None:
         self.previous_input = special_key
-        if special_key is SpecialKey.up:
+        if special_key is SpecialKey.UP:
             self.index = (self.index - 1) % len(self.arguments)
-        elif special_key is SpecialKey.down:
+        elif special_key is SpecialKey.DOWN:
             self.index = (self.index + 1) % len(self.arguments)
-        elif special_key is SpecialKey.ctrl_up:
+        elif special_key is SpecialKey.CTRL_UP:
             self.index = 0
-        elif special_key is SpecialKey.ctrl_down:
+        elif special_key is SpecialKey.CTRL_DOWN:
             self.index = len(self.arguments) - 1
-        elif special_key is SpecialKey.enter:
+        elif special_key is SpecialKey.ENTER:
             self.maybe_finish()
-        elif special_key is SpecialKey.ctrl_z:
+        elif special_key is SpecialKey.CTRL_Z:
             self.go_back()
-        elif special_key is SpecialKey.ctrl_y:
+        elif special_key is SpecialKey.CTRL_Y:
             self.reverse_go_back()
         else:
             try:
@@ -360,11 +362,14 @@ class Builder(Generic[NT]):
             except ValueError:
                 pass
             return
-        self.inner_index = min(self.higher_inner_index, len(self.arguments[self.index].display(builder=self)))
+        self.inner_index = min(self.higher_inner_index, self.highest_inner_index_from_current_selected())
+
+    def fetch_input_bytes(self) -> bytes:
+        return msvcrt.getch()
 
     def iterate(self) -> None:
         self.display()
-        byte = msvcrt.getch()
+        byte = self.fetch_input_bytes()
         if byte == b'\x03':
             raise KeyboardInterrupt
 

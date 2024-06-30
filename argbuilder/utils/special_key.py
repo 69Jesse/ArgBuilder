@@ -8,22 +8,22 @@ __all__ = (
 
 
 class SpecialKey(Enum):
-    up = b'H'
-    down = b'P'
-    left = b'K'
-    right = b'M'
-    ctrl_up = b'\x8d'
-    ctrl_down = b'\x91'
-    ctrl_left = b's'
-    ctrl_right = b't'
-    delete = b'S'
-    ctrl_delete = b'\x93'
-    enter = b'\r'
-    backspace = b'\x08'
-    ctrl_backspace = b'\x7f'
-    escape = b'\x1b'
-    ctrl_z = b'\x1a'
-    ctrl_y = b'\x19'
+    UP = b'H'
+    DOWN = b'P'
+    LEFT = b'K'
+    RIGHT = b'M'
+    CTRL_UP = b'\x8d'
+    CTRL_DOWN = b'\x91'
+    CTRL_LEFT = b's'
+    CTRL_RIGHT = b't'
+    DELETE = b'S'
+    CTRL_DELETE = b'\x93'
+    ENTER = b'\r'
+    BACKSPACE = b'\x08'
+    CTRL_BACKSPACE = b'\x7f'
+    ESCAPE = b'\x1b'
+    CTRL_Z = b'\x1a'
+    CTRL_Y = b'\x19'
 
 
 SPECIAL_KEYS_NOTHING_BEFORE: set[bytes] = {
