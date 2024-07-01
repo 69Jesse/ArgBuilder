@@ -64,11 +64,13 @@ class ArgParser(NamedTuple):
         *,
         name: str = MISSING,
         author: str = '69Jesse',
-        remember: bool | RememberMode | tuple[bool, int] | tuple[RememberMode, int] = False,
+        remember: bool | int | RememberMode | tuple[bool, int] | tuple[RememberMode, int] = False,
     ) -> NT:
         name = name if name is not MISSING else os.path.basename(sys.argv[0]).rsplit('.', 1)[0]
         if isinstance(remember, bool):
             remember = RememberMode.EVERYWHERE if remember else RememberMode.NONE
+        if isinstance(remember, int):
+            remember = (RememberMode.EVERYWHERE, remember)
         if isinstance(remember, tuple) and isinstance(remember[0], bool):
             remember = (RememberMode.EVERYWHERE if remember[0] else RememberMode.NONE, remember[1])
         if not isinstance(remember, tuple):
