@@ -3,6 +3,7 @@ from ..utils import (
     SpecialKey,
     colour,
 )
+from ..command import SetCommand
 
 from abc import (
     ABC,
@@ -192,14 +193,27 @@ class ParsedArgument(ABC, Generic[Value]):
     def type_string(self) -> str:
         return self.__class__.__name__.removesuffix('Argument')
 
-    def add_to_string_value(
+    def get_string_value_with_char_inserted(
+        self,
+        char: str,
+        *,
+        builder: 'Builder[Any]',
+    ) -> str:
+        return self.string_value[:builder.inner_index] + char + self.string_value[builder.inner_index:]
+
+    def regular_char_handling(
         self,
         char: str,
         *,
         builder: 'Builder[Any]',
     ) -> None:
-        self.string_value = self.string_value[:builder.inner_index] + char + self.string_value[builder.inner_index:]
-        builder.inner_index += 1
+        builder.command_manager.do(SetCommand(
+            argument=self,
+            after_string_value=self.get_string_value_with_char_inserted(char, builder=builder),
+            after_is_none=False,
+            after_index=builder.index,
+            after_inner_index=builder.inner_index + len(char),
+        ), builder=builder)
 
     @abstractmethod
     def handle_char(
@@ -208,6 +222,7 @@ class ParsedArgument(ABC, Generic[Value]):
         *,
         builder: 'Builder[Any]',
     ) -> None:
+        """Return True if a new command was added, False otherwise."""
         raise NotImplementedError
 
     def _regular_backspace(
@@ -217,12 +232,24 @@ class ParsedArgument(ABC, Generic[Value]):
     ) -> None:
         if len(self.string_value) == 0:
             if self.allow_none:
-                self.is_none = not self.is_none
+                builder.command_manager.do(SetCommand(
+                    argument=self,
+                    after_string_value='',
+                    after_is_none=not self.is_none,
+                    after_index=builder.index,
+                    after_inner_index=builder.inner_index,
+                ), builder=builder)
             return
         if builder.inner_index == 0:
             return
-        self.string_value = self.string_value[:builder.inner_index - 1] + self.string_value[builder.inner_index:]
-        builder.inner_index -= 1
+        builder.command_manager.do(SetCommand(
+            argument=self,
+            after_string_value=self.string_value[:builder.inner_index - 1] + self.string_value[builder.inner_index:],
+            after_is_none=False,
+            after_index=builder.index,
+            after_inner_index=builder.inner_index - 1,
+        ), builder=builder)
+        return
 
     def _regular_ctrl_backspace(
         self,
@@ -231,8 +258,14 @@ class ParsedArgument(ABC, Generic[Value]):
     ) -> None:
         if builder.inner_index == 0:
             return
-        self.string_value = self.string_value[builder.inner_index:]
-        builder.inner_index = 0
+        builder.command_manager.do(SetCommand(
+            argument=self,
+            after_string_value=self.string_value[builder.inner_index:],
+            after_is_none=False,
+            after_index=builder.index,
+            after_inner_index=0,
+        ), builder=builder)
+        return
 
     def _regular_delete(
         self,
@@ -241,7 +274,14 @@ class ParsedArgument(ABC, Generic[Value]):
     ) -> None:
         if builder.inner_index == len(self.string_value):
             return
-        self.string_value = self.string_value[:builder.inner_index] + self.string_value[builder.inner_index + 1:]
+        builder.command_manager.do(SetCommand(
+            argument=self,
+            after_string_value=self.string_value[:builder.inner_index] + self.string_value[builder.inner_index + 1:],
+            after_is_none=False,
+            after_index=builder.index,
+            after_inner_index=builder.inner_index,
+        ), builder=builder)
+        return
 
     def _regular_ctrl_delete(
         self,
@@ -250,17 +290,28 @@ class ParsedArgument(ABC, Generic[Value]):
     ) -> None:
         if builder.inner_index == len(self.string_value):
             return
-        self.string_value = self.string_value[:builder.inner_index]
+        builder.command_manager.do(SetCommand(
+            argument=self,
+            after_string_value=self.string_value[:builder.inner_index],
+            after_is_none=False,
+            after_index=builder.index,
+            after_inner_index=builder.inner_index,
+        ), builder=builder)
+        return
 
     def _regular_left(
         self,
         *,
         builder: 'Builder[Any]',
     ) -> None:
-        if len(self.string_value) == 0:
-            if self.allow_none:
-                self.is_none = not self.is_none
-            return
+        if len(self.string_value) == 0 and self.allow_none:
+            builder.command_manager.do(SetCommand(
+                argument=self,
+                after_string_value='',
+                after_is_none=not self.is_none,
+                after_index=builder.index,
+                after_inner_index=0,
+            ), builder=builder)
         if builder.inner_index == 0:
             return
         builder.inner_index = max(0, builder.inner_index - 1)
@@ -325,16 +376,15 @@ class ParsedArgument(ABC, Generic[Value]):
         special_key: SpecialKey,
         *,
         builder: 'Builder[Any]',
-    ) -> bool:
-        result: bool = self._regular_special_key(special_key, builder=builder)
-        if result and special_key in (
+    ) -> None:
+        something_changed = self._regular_special_key(special_key, builder=builder)
+        if something_changed and special_key in (
             SpecialKey.LEFT,
             SpecialKey.CTRL_LEFT,
             SpecialKey.RIGHT,
             SpecialKey.CTRL_RIGHT,
         ):
             builder.higher_inner_index = builder.inner_index
-        return result
 
     @abstractmethod
     def handle_special_key(
@@ -343,4 +393,5 @@ class ParsedArgument(ABC, Generic[Value]):
         *,
         builder: 'Builder[Any]',
     ) -> None:
+        """Return True if a new command was added, False otherwise."""
         raise NotImplementedError

@@ -117,6 +117,7 @@ def arg(
 
     class Arguments(ArgParser):
         number: int = arg('The number')
+        boolean: bool | None = arg('The boolean')
         message: str = arg('The message', default='Hello, World!')
         path: Path | None = arg('The path', default=None)
 

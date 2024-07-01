@@ -16,8 +16,8 @@ from .utils import (
     random_rgb_neon_colour,
 )
 from .remember import RememberMode, maybe_remember_before, maybe_remember_after
+from .command import CommandManager
 
-import time
 from enum import Enum
 from functools import cached_property
 import msvcrt
@@ -74,8 +74,7 @@ class Builder(Generic[NT]):
     inner_index: int
     higher_inner_index: int
     last_text_line_count: int
-    previous_string_values: list[tuple[str, bool, int, float]]  # [(string_value, selected.is_none, index, epoch), ...]
-    reversed_string_values: list[tuple[str, bool, int]]  # [(string_value, selected.is_none, index), ...]
+    command_manager: CommandManager
     previous_input: Optional[str | SpecialKey]
     def __init__(
         self,
@@ -98,8 +97,7 @@ class Builder(Generic[NT]):
         self.index = 0
         self.higher_inner_index = 0
         self.last_text_line_count = -1
-        self.previous_string_values = []
-        self.reversed_string_values = []
+        self.command_manager = CommandManager()
         self.previous_input = None
         maybe_remember_before(self)
         self.inner_index = self.highest_inner_index_from_current_selected()
@@ -287,55 +285,7 @@ class Builder(Generic[NT]):
             self.previous_input = byte.decode('cp437')
         except UnicodeDecodeError:
             return
-        try:
-            self.selected_argument().handle_char(self.previous_input, builder=self)
-        except ValueError:
-            pass
-        return
-
-    def on_value_change(
-        self,
-        *,
-        before: tuple[str, bool],
-        after: tuple[str, bool],
-    ) -> None:
-        # TODO maybe add Command design pattern??
-        if len(after) > 0:
-            self.selected_argument().is_none = False
-        if self.previous_input not in (
-            SpecialKey.CTRL_Z,
-            SpecialKey.CTRL_Y,
-        ):
-            self.reversed_string_values = []
-            previous_entry: Optional[tuple[str, bool, int, float]] = self.previous_string_values[-1] if self.previous_string_values else None
-            if previous_entry is not None:
-                _, _, index, previous_epoch = previous_entry
-                if index == self.index:
-                    epoch_difference: float = time.time() - previous_epoch
-                    if epoch_difference < 0.3:
-                        return
-            self.previous_string_values.append((*before, self.index, time.time()))
-
-    def go_back(self) -> None:
-        if len(self.previous_string_values) == 0:
-            return
-        string_value, is_none, index, _ = self.previous_string_values.pop()
-        argument = self.arguments[index]
-        entry = (argument.string_value, argument.is_none, index)
-        scuffed_log(string_value, is_none, index, entry)
-        argument.string_value = string_value
-        argument.is_none = is_none
-        self.reversed_string_values.append(entry)
-
-    def reverse_go_back(self) -> None:
-        if len(self.reversed_string_values) == 0:
-            return
-        string_value, is_none, index = self.reversed_string_values.pop()
-        argument = self.arguments[index]
-        entry = (argument.string_value, argument.is_none, index, 0)
-        argument.string_value = string_value
-        argument.is_none = is_none
-        self.previous_string_values.append(entry)
+        self.selected_argument().handle_char(self.previous_input, builder=self)
 
     def highest_inner_index_from_current_selected(self) -> int:
         return len(self.arguments[self.index].display(builder=self))
@@ -344,25 +294,25 @@ class Builder(Generic[NT]):
         self.previous_input = special_key
         if special_key is SpecialKey.UP:
             self.index = (self.index - 1) % len(self.arguments)
+            self.inner_index = self.higher_inner_index
         elif special_key is SpecialKey.DOWN:
             self.index = (self.index + 1) % len(self.arguments)
+            self.inner_index = self.higher_inner_index
         elif special_key is SpecialKey.CTRL_UP:
             self.index = 0
+            self.inner_index = self.higher_inner_index
         elif special_key is SpecialKey.CTRL_DOWN:
             self.index = len(self.arguments) - 1
+            self.inner_index = self.higher_inner_index
         elif special_key is SpecialKey.ENTER:
             self.maybe_finish()
         elif special_key is SpecialKey.CTRL_Z:
-            self.go_back()
+            self.command_manager.undo(builder=self)
         elif special_key is SpecialKey.CTRL_Y:
-            self.reverse_go_back()
+            self.command_manager.redo(builder=self)
         else:
-            try:
-                self.selected_argument().handle_special_key(special_key, builder=self)
-            except ValueError:
-                pass
-            return
-        self.inner_index = min(self.higher_inner_index, self.highest_inner_index_from_current_selected())
+            self.selected_argument().handle_special_key(special_key, builder=self)
+        self.inner_index = min(self.inner_index, self.highest_inner_index_from_current_selected())
 
     def fetch_input_bytes(self) -> bytes:
         return msvcrt.getch()
@@ -373,9 +323,6 @@ class Builder(Generic[NT]):
         if byte == b'\x03':
             raise KeyboardInterrupt
 
-        selected: ParsedArgument = self.selected_argument()
-        before_string_value: str = selected.string_value
-        before_is_none: bool = selected.is_none
         if byte == b'\xe0':
             byte = msvcrt.getch()
             self.handle_special_key(SpecialKey(byte))
@@ -383,11 +330,11 @@ class Builder(Generic[NT]):
             self.handle_special_key(SpecialKey(byte))
         else:
             self.handle_byte(byte)
-        if selected is self.selected_argument() and (before_string_value != selected.string_value or before_is_none != selected.is_none):
-            self.on_value_change(
-                before=(before_string_value, before_is_none),
-                after=(selected.string_value, selected.is_none),
-            )
+
+    def on_command_created(self) -> None:
+        command = self.command_manager.peek()
+        command.execute(builder=self)
+        self.command_manager.check_merge(builder=self)
 
     def create_named_tuple(self) -> NT:
         if not all(a.value_is_valid(builder=self) for a in self.arguments):

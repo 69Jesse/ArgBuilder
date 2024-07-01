@@ -1,5 +1,6 @@
 from ..utils import SpecialKey
 from .base import ParsedArgument
+from ..command import SetCommand
 
 from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
@@ -54,11 +55,21 @@ class BooleanArgument(ParsedArgument[bool]):
         builder: 'Builder[Any]',
     ) -> None:
         if char in self.TRUE_CHARS:
-            self.string_value = '1'
-            return
-        if char in self.FALSE_CHARS:
-            self.string_value = '0'
-            return
+            builder.command_manager.do(SetCommand(
+                argument=self,
+                after_string_value='1',
+                after_is_none=False,
+                after_index=builder.index,
+                after_inner_index=0,
+            ), builder=builder)
+        elif char in self.FALSE_CHARS:
+            builder.command_manager.do(SetCommand(
+                argument=self,
+                after_string_value='0',
+                after_is_none=False,
+                after_index=builder.index,
+                after_inner_index=0,
+            ), builder=builder)
 
     def handle_special_key(
         self,
@@ -67,14 +78,54 @@ class BooleanArgument(ParsedArgument[bool]):
         builder: 'Builder[Any]',
     ) -> None:
         if special_key is SpecialKey.BACKSPACE:
-            self.string_value = ''
-            if len(self.string_value) == 0 and self.allow_none:
-                self.is_none = not self.is_none
+            if self.is_none or self.string_value != '':
+                builder.command_manager.do(SetCommand(
+                    argument=self,
+                    after_string_value='',
+                    after_is_none=False,
+                    after_index=builder.index,
+                    after_inner_index=0,
+                ), builder=builder)
+            elif self.string_value == '' and self.allow_none:
+                builder.command_manager.do(SetCommand(
+                    argument=self,
+                    after_string_value='',
+                    after_is_none=True,
+                    after_index=builder.index,
+                    after_inner_index=0,
+                ), builder=builder)
             return
-        if special_key is SpecialKey.LEFT:
-            if len(self.string_value) == 0 and self.allow_none:
-                self.is_none = not self.is_none
         if special_key is SpecialKey.LEFT or special_key is SpecialKey.RIGHT:
-            self.string_value = '1' if self.string_value != '1' else '0'
-            return
-        raise ValueError(f'Unsupported special key {special_key}')
+            if special_key is SpecialKey.LEFT:
+                if self.allow_none:
+                    if not self.is_none and self.string_value == '' or self.string_value == '1':
+                        after = ('', True)
+                    elif self.is_none:
+                        after = ('0', False)
+                    else:
+                        after = ('1', False)
+                else:
+                    if self.string_value == '0':
+                        after = ('1', False)
+                    else:
+                        after = ('0', False)
+            else:
+                if self.allow_none:
+                    if not self.is_none and self.string_value == '0':
+                        after = ('', True)
+                    elif not self.is_none and self.string_value == '1':
+                        after = ('0', False)
+                    else:
+                        after = ('1', False)
+                else:
+                    if self.string_value == '0':
+                        after = ('1', False)
+                    else:
+                        after = ('0', False)
+            builder.command_manager.do(SetCommand(
+                argument=self,
+                after_string_value=after[0],
+                after_is_none=after[1],
+                after_index=builder.index,
+                after_inner_index=0,
+            ), builder=builder)

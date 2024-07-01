@@ -45,7 +45,7 @@ class StringArgument(ParsedArgument[str]):
         *,
         builder: 'Builder[Any]',
     ) -> None:
-        self.add_to_string_value(char, builder=builder)
+        return self.regular_char_handling(char, builder=builder)
 
     def handle_special_key(
         self,
@@ -53,6 +53,4 @@ class StringArgument(ParsedArgument[str]):
         *,
         builder: 'Builder[Any]',
     ) -> None:
-        if self.regular_special_key_handling(special_key, builder=builder):
-            return
-        raise ValueError(f'Unsupported special key {special_key}')
+        return self.regular_special_key_handling(special_key, builder=builder)
