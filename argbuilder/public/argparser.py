@@ -1,5 +1,5 @@
 # I am terribly sorry
-from ..builder import Builder
+from ..builder import Builder, increment_arg_parsers_defined
 from ..utils import MISSING
 from ..remember import RememberMode
 
@@ -106,6 +106,7 @@ if not TYPE_CHECKING:
     old_arg_parser = ArgParser
     class Meta(NamedTupleMeta):
         def __new__(cls, *args: Any) -> Any:
+            increment_arg_parsers_defined()
             kwargs = args[2]
             kwargs['__orig_bases__'] = (NamedTuple,)
             nt = NamedTupleMeta.__new__(

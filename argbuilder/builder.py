@@ -16,7 +16,7 @@ from .utils import (
     random_rgb_neon_colour,
 )
 from .remember import RememberMode, maybe_remember_before, maybe_remember_after
-from .command import CommandManager
+from .command import CommandManager, SetCommand
 
 from enum import Enum
 from functools import cached_property
@@ -24,6 +24,7 @@ import msvcrt
 import os
 from pathlib import Path
 import re
+import sys
 
 from typing import (
     Any,
@@ -36,6 +37,7 @@ from typing import (
 
 __all__ = (
     'Builder',
+    'increment_arg_parsers_defined',
 )
 
 
@@ -53,12 +55,17 @@ ANSI_ESCAPE = re.compile(r'''
 ''', re.VERBOSE)
 
 
-def scuffed_log(*message: str | Any) -> None:
-    with open('log.txt', 'a') as file:
-        file.write(f'{' '.join(map(str, message))}\n')
-
-
 NT = TypeVar('NT', bound=NamedTuple)
+
+
+ARG_PARSERS_DEFINED: int = 0
+
+def increment_arg_parsers_defined() -> None:
+    global ARG_PARSERS_DEFINED
+    ARG_PARSERS_DEFINED += 1
+
+def can_use_argv() -> bool:
+    return ARG_PARSERS_DEFINED <= 1
 
 
 class Builder(Generic[NT]):
@@ -100,6 +107,10 @@ class Builder(Generic[NT]):
         self.command_manager = CommandManager()
         self.previous_input = None
         maybe_remember_before(self)
+        if can_use_argv():
+            used = self.use_argv()
+            if used:
+                self.maybe_finish()
         self.inner_index = self.highest_inner_index_from_current_selected()
 
     @staticmethod
@@ -331,10 +342,33 @@ class Builder(Generic[NT]):
         else:
             self.handle_byte(byte)
 
-    def on_command_created(self) -> None:
-        command = self.command_manager.peek()
-        command.execute(builder=self)
-        self.command_manager.check_merge(builder=self)
+    def fetch_argv_values(self) -> dict[ParsedArgument[Any], str]:
+        # TODO
+        print('Fetching argv values is not yet implemented')
+        return {}
+
+    def use_argv(self) -> bool:
+        argv_values: dict[ParsedArgument[Any], str] = self.fetch_argv_values()
+        for argument, value in argv_values.items():
+            if argument.allow_none and value.lower() == 'none':
+                self.command_manager.do(SetCommand(
+                    argument=argument,
+                    after_string_value='',
+                    after_is_none=True,
+                    after_index=self.index,
+                    after_inner_index=self.inner_index,
+                ), builder=self)
+                continue
+            self.command_manager.do(SetCommand(
+                argument=argument,
+                after_string_value=value,
+                after_is_none=False,
+                after_index=self.index,
+                after_inner_index=self.inner_index,
+            ), builder=self)
+            if not argument.value_is_valid(builder=self):
+                raise ValueError(f'Invalid value {value!r} for {argument.name}')
+        return bool(argv_values)
 
     def create_named_tuple(self) -> NT:
         if not all(a.value_is_valid(builder=self) for a in self.arguments):
