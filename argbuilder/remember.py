@@ -83,7 +83,7 @@ def maybe_fetch_memory(builder: 'Builder[Any]') -> Optional[Memory]:
     except FileNotFoundError:
         return None
 
-    mode, timestamp = builder.remember_data if builder.remember_data[0] is not RememberMode.NONE else (RememberMode.EVERYWHERE, builder.remember_data[1])
+    mode, _ = builder.remember_data if builder.remember_data[0] is not RememberMode.NONE else (RememberMode.EVERYWHERE, builder.remember_data[1])
     if mode is RememberMode.EVERYWHERE:
         memory = data.get('everywhere_memory', None)
     elif mode is RememberMode.CWD:
@@ -93,16 +93,13 @@ def maybe_fetch_memory(builder: 'Builder[Any]') -> Optional[Memory]:
     if memory is None:
         return None
 
-    now = int(time.time())
-    if timestamp != -1 and memory.get('timestamp', now) < now - timestamp:
-        return None
-
     return memory
 
 
 def create_memories_mapping(
     memory: Memory,
     arguments: set['ParsedArgument[Any]'],
+    builder: 'Builder[Any]',
 ) -> dict['ParsedArgument[Any]', tuple[str, bool]]:
     memorized: int = memory.get('memorized', 0)
     are_none: int = memory.get('are_none', 0)
@@ -114,6 +111,7 @@ def create_memories_mapping(
     }
     now: int = int(time.time())
     mapping: dict['ParsedArgument[Any]', tuple[str, bool]] = {}  # {argument: (value, is_none)}
+    _, timestamp = builder.remember_data if builder.remember_data[0] is not RememberMode.NONE else (RememberMode.EVERYWHERE, builder.remember_data[1])
     for i, (name, value) in enumerate(zip(names, values)):
         if not bit_is_set(memorized, i):
             continue
@@ -121,8 +119,12 @@ def create_memories_mapping(
         argument = name_to_argument.get(name, None)
         if argument is None:
             continue
-        if isinstance(argument.remember, int) and now - memory.get('timestamp', now) > argument.remember:
-            continue
+        if isinstance(argument.remember, int):
+            if now - memory.get('timestamp', now) > argument.remember:
+                continue
+        else:
+            if timestamp != -1 and memory.get('timestamp', now) < now - timestamp:
+                continue
         mapping[argument] = (value, bit_is_set(are_none, i))
     return mapping
 
@@ -177,7 +179,7 @@ def maybe_remember_before(builder: 'Builder[Any]') -> None:
     memory = maybe_fetch_memory(builder)
     if memory is None:
         return
-    mapping = create_memories_mapping(memory, arguments)
+    mapping = create_memories_mapping(memory, arguments, builder)
     for argument, (value, is_none) in mapping.items():
         argument.string_value = value
         argument.is_none = is_none
