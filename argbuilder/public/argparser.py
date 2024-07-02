@@ -95,7 +95,7 @@ class ArgParser(NamedTuple):
             *,
             name: str = MISSING,
             author: str = '69Jesse',
-            remember: bool | RememberMode | tuple[bool, int] | tuple[RememberMode, int] = False,
+            remember: bool | int | RememberMode | tuple[bool, int] | tuple[RememberMode, int] = False,
         ) -> Self:
             ...
     else:
