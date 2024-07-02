@@ -59,5 +59,11 @@ class Flag:
     DoesNotExist = DoesNotExistFlag
     IsDir = IsDirFlag
     IsFile = IsFileFlag
+
+    # TODO add docs to the rest
+
     Secret = SecretFlag
+    """A flag to specify that the argument is a secret value. Do note that if you have this get remembered, it will be stored in plain text."""
+
     VerySecret = VerySecretFlag
+    """A flag to specify that the argument is a very secret value. This will not be stored in the history file, and will not be remembered."""
