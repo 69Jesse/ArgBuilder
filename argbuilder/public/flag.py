@@ -59,5 +59,5 @@ class Flag:
     DoesNotExist = DoesNotExistFlag
     IsDir = IsDirFlag
     IsFile = IsFileFlag
-    Password = SecretFlag
-    HardPassword = VerySecretFlag
+    Secret = SecretFlag
+    VerySecret = VerySecretFlag
