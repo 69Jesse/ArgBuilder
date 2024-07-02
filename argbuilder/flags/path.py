@@ -4,7 +4,7 @@ from ..arguments import (
 )
 from .base import Flag
 
-from typing import final, TYPE_CHECKING, Any
+from typing import final, TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:
     from ..builder import Builder
 
@@ -18,8 +18,17 @@ __all__ = (
 
 
 class PathFlag(Flag):
-    def allowed_parsed_argument_types(self) -> set[type[ParsedArgument]]:
+    def allowed_parsed_argument_types(self) -> Optional[set[type[ParsedArgument]]]:
         return {PathArgument,}
+
+    def maybe_change_display(
+        self,
+        argument: PathArgument,
+        display: str,
+        *,
+        builder: 'Builder[Any]',
+    ) -> str:
+        return display
 
 
 @final

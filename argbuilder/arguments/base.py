@@ -144,7 +144,10 @@ class ParsedArgument(ABC, Generic[Value]):
     ) -> str:
         if self.is_none:
             return 'None'
-        return self.raw_display(builder=builder)
+        display = self.raw_display(builder=builder)
+        for flag in self.flags:
+            display = flag.maybe_change_display(self, display, builder=builder)
+        return display
 
     def one_letter_highlight(
         self,

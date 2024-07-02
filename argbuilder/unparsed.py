@@ -219,7 +219,8 @@ class UnparsedArgument:
         for flag in self.flags:
             if not isinstance(flag, Flag):
                 raise ValueError(f'Invalid flag {flag!r}')
-            if parsed_cls not in flag.allowed_parsed_argument_types():
+            allowed_argument_types = flag.allowed_parsed_argument_types()
+            if allowed_argument_types is not None and parsed_cls not in allowed_argument_types:
                 raise ValueError(f'Flag {flag!r} does not support {parsed_cls.__name__} arguments')
 
     def check_everything(

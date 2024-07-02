@@ -10,7 +10,7 @@ from abc import (
     abstractmethod,
 )
 
-from typing import final, TYPE_CHECKING, Any
+from typing import final, TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:
     from ..builder import Builder
 
@@ -32,7 +32,7 @@ class ValueFlag(Flag):
     ) -> None:
         self.value = value
 
-    def allowed_parsed_argument_types(self) -> set[type[ParsedArgument]]:
+    def allowed_parsed_argument_types(self) -> Optional[set[type[ParsedArgument]]]:
         return {StringArgument, IntegerArgument, FloatArgument}
 
     @abstractmethod
@@ -57,6 +57,15 @@ class ValueFlag(Flag):
         )):
             return self.apply(argument.raw_get_value(builder=builder))
         raise TypeError(f'Invalid type {argument.__class__.__name__}')
+
+    def maybe_change_display(
+        self,
+        argument: ParsedArgument,
+        display: str,
+        *,
+        builder: 'Builder[Any]',
+    ) -> str:
+        return display
 
 
 @final
