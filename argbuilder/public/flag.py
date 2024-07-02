@@ -7,8 +7,8 @@ from ..flags import (
     DoesNotExistFlag,
     IsDirFlag,
     IsFileFlag,
-    PasswordFlag,
-    HardPasswordFlag,
+    SecretFlag,
+    VerySecretFlag,
 )
 
 from typing import final
@@ -59,5 +59,5 @@ class Flag:
     DoesNotExist = DoesNotExistFlag
     IsDir = IsDirFlag
     IsFile = IsFileFlag
-    Password = PasswordFlag
-    HardPassword = HardPasswordFlag
+    Password = SecretFlag
+    HardPassword = VerySecretFlag

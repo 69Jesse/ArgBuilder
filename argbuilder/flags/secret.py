@@ -10,13 +10,13 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    'PasswordFlag',
-    'HardPasswordFlag',
+    'SecretFlag',
+    'VerySecretFlag',
 )
 
 
 @final
-class PasswordFlag(Flag):
+class SecretFlag(Flag):
     def allowed_parsed_argument_types(self) -> Optional[set[type[ParsedArgument]]]:
         return None
 
@@ -50,7 +50,7 @@ class PasswordFlag(Flag):
 
 
 @final
-class HardPasswordFlag(Flag):
+class VerySecretFlag(Flag):
     def allowed_parsed_argument_types(self) -> Optional[set[type[ParsedArgument]]]:
         return None
 
