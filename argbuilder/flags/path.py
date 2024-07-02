@@ -14,6 +14,7 @@ __all__ = (
     'DoesNotExistFlag',
     'IsDirFlag',
     'IsFileFlag',
+    'HasSuffixFlag',
 )
 
 
@@ -85,3 +86,21 @@ class IsFileFlag(PathFlag):
 
     def __str__(self) -> str:
         return 'Is File'
+
+
+@final
+class HasSuffixFlag(PathFlag):
+    suffix: str
+    def __init__(self, suffix: str, /) -> None:
+        self.suffix = '.' + suffix.removeprefix('.')
+
+    def check_maybe_raise(
+        self,
+        argument: PathArgument,
+        *,
+        builder: 'Builder[Any]',
+    ) -> bool:
+        return argument.raw_get_value(builder=builder).suffix == self.suffix
+
+    def __str__(self) -> str:
+        return f'Has Extension "{self.suffix}"'

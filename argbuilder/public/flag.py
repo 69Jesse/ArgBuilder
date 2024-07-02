@@ -7,6 +7,7 @@ from ..flags import (
     DoesNotExistFlag,
     IsDirFlag,
     IsFileFlag,
+    HasSuffixFlag,
     SecretFlag,
     VerySecretFlag,
 )
@@ -52,18 +53,34 @@ class Flag:
         raise TypeError('Do not instantiate this class, use "Flag.xyz()" instead.')
 
     LessThan = LessThanFlag
-    LessThanOrEqual = LessThanOrEqualFlag
-    GreaterThan = GreaterThanFlag
-    GreaterThanOrEqual = GreaterThanOrEqualFlag
-    Exists = ExistsFlag
-    DoesNotExist = DoesNotExistFlag
-    IsDir = IsDirFlag
-    IsFile = IsFileFlag
+    """Specify that an argument must be less than a specific value. This works for numbers and strings, where its length is compared."""
 
-    # TODO add docs to the rest
+    LessThanOrEqual = LessThanOrEqualFlag
+    """Specify that an argument must be less than or equal to a specific value. This works for numbers and strings, where its length is compared."""
+
+    GreaterThan = GreaterThanFlag
+    """Specify that an argument must be greater than a specific value. This works for numbers and strings, where its length is compared."""
+
+    GreaterThanOrEqual = GreaterThanOrEqualFlag
+    """Specify that an argument must be greater than or equal to a specific value. This works for numbers and strings, where its length is compared."""
+
+    Exists = ExistsFlag
+    """Specify that an argument of type pathlib.Path must exist. Do note that if you use Flag.IsDir() or Flag.IsFile(), this flag is redundant."""
+
+    DoesNotExist = DoesNotExistFlag
+    """Specify that an argument of type pathlib.Path must not exist."""
+
+    IsDir = IsDirFlag
+    """Specify that an argument of type pathlib.Path must be an existing directory."""
+
+    IsFile = IsFileFlag
+    """Specify that an argument of type pathlib.Path must be an existing file."""
+
+    HasSuffix = HasSuffixFlag
+    """Specify that an argument of type pathlib.Path must have a specific suffix."""
 
     Secret = SecretFlag
-    """A flag to specify that the argument is a secret value. Do note that if you have this get remembered, it will be stored in plain text."""
+    """Specify that an argument is a secret value. Do note that if you have this get remembered, it will be stored in plain text."""
 
     VerySecret = VerySecretFlag
-    """A flag to specify that the argument is a very secret value. This will not be stored in the history file, and will not be remembered."""
+    """Specify that an argument is a very secret value. Do note that if you have this get remembered, it will be stored in plain text."""
