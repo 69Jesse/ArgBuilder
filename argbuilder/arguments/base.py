@@ -72,12 +72,29 @@ class ParsedArgument(ABC, Generic[Value]):
         self.remember = remember
         self.after_init()
 
+    def after_init(self) -> None:
+        pass
+
     @property
     def required(self) -> bool:
         return not self.has_default
 
-    def after_init(self) -> None:
-        pass
+    def raw_set_string_value_and_is_none(
+        self,
+        string_value: str,
+        is_none: bool,
+        *,
+        builder: 'Builder[Any]',
+    ) -> None:
+        """Raises ValueError if the string value is invalid."""
+        before_string_value = self.string_value
+        before_is_none = self.is_none
+        self.string_value = string_value
+        self.is_none = is_none
+        if not self.value_is_valid(builder=builder):
+            self.string_value = before_string_value
+            self.is_none = before_is_none
+            raise ValueError('Invalid value')
 
     def check_everything_is_valid_type(
         self,

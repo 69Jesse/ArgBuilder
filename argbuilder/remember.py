@@ -180,9 +180,13 @@ def maybe_remember_before(builder: 'Builder[Any]') -> None:
     if memory is None:
         return
     mapping = create_memories_mapping(memory, arguments, builder)
-    for argument, (value, is_none) in mapping.items():
-        argument.string_value = value
-        argument.is_none = is_none
+    for argument, (string_value, is_none) in mapping.items():
+        try:
+            argument.raw_set_string_value_and_is_none(
+                string_value, is_none, builder=builder,
+            )
+        except ValueError:
+            continue
 
 
 def maybe_remember_after(builder: 'Builder[Any]') -> None:
@@ -190,3 +194,10 @@ def maybe_remember_after(builder: 'Builder[Any]') -> None:
     if len(memory.get('names', [])) == 0:
         return
     update_data(builder, memory)
+
+
+def clear_memory(builder: 'Builder[Any]') -> None:
+    name = normalize_name(builder.name)
+    path = MEMORY_FOLDER / f'{name}.json'
+    if path.exists():
+        path.unlink()

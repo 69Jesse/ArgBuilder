@@ -15,8 +15,8 @@ from .utils import (
     colour,
     random_rgb_neon_colour,
 )
-from .remember import RememberMode, maybe_remember_before, maybe_remember_after
-from .command import CommandManager, SetCommand
+from .remember import RememberMode, maybe_remember_before, maybe_remember_after, clear_memory
+from .command import CommandManager
 
 from enum import Enum
 from functools import cached_property
@@ -58,14 +58,21 @@ ANSI_ESCAPE = re.compile(r'''
 NT = TypeVar('NT', bound=NamedTuple)
 
 
+def should_clear_memory() -> bool:
+    if len(sys.argv) > 1 and sys.argv[1] == '!clear':
+        sys.argv.pop(1)
+        return True
+    return False
+
+
 ARG_PARSERS_DEFINED: int = 0
 
 def increment_arg_parsers_defined() -> None:
     global ARG_PARSERS_DEFINED
     ARG_PARSERS_DEFINED += 1
 
-def can_use_argv() -> bool:
-    return ARG_PARSERS_DEFINED <= 1
+def should_use_argv() -> bool:
+    return ARG_PARSERS_DEFINED <= 1 and len(sys.argv) > 1
 
 
 class Builder(Generic[NT]):
@@ -106,11 +113,12 @@ class Builder(Generic[NT]):
         self.last_text_line_count = -1
         self.command_manager = CommandManager()
         self.previous_input = None
-        maybe_remember_before(self)
-        if can_use_argv():
-            used = self.use_argv()
-            if used:
-                self.maybe_finish()
+        if should_clear_memory():
+            clear_memory(self)
+        else:
+            maybe_remember_before(self)
+        if should_use_argv():
+            self.use_argv()
         self.inner_index = self.highest_inner_index_from_current_selected()
 
     @staticmethod
@@ -124,7 +132,7 @@ class Builder(Generic[NT]):
     ) -> 'Builder[NT]':
         for key, value in vars(named_tuple_cls).items():
             if isinstance(value, UnparsedArgument):
-                raise ValueError(f'{key!r} must have a type annotation. Example:\n\t{key}: int = arg(...)')
+                raise ValueError(f'"{key}" must have a type annotation. Example:\n\t{key}: int = arg(...)')
 
         arguments: list[ParsedArgument] = []
 
@@ -183,7 +191,7 @@ class Builder(Generic[NT]):
                 )
                 arguments.append(argument)
             except ValueError as exc:
-                raise ValueError(f'Error while parsing {field_name!r}') from exc
+                raise ValueError(f'Error while parsing "{field_name}"') from exc
 
         return Builder(
             named_tuple_cls=named_tuple_cls,
@@ -342,33 +350,64 @@ class Builder(Generic[NT]):
         else:
             self.handle_byte(byte)
 
+    def set_or_throw_if_exists(self, mapping: dict[Any, Any], key: Any, value: Any) -> None:
+        if key in mapping:
+            raise ValueError(f'Key "{key}" used more than once')
+        mapping[key] = value
+
     def fetch_argv_values(self) -> dict[ParsedArgument[Any], str]:
-        # TODO
-        print('Fetching argv values is not yet implemented')
-        return {}
+        keyword_values: dict[str, Optional[str]] = {}
+        positional_values: list[str] = []
+        latest_keyword: Optional[str] = None
+        for arg in sys.argv[1:]:
+            if arg.startswith('--'):
+                if latest_keyword is not None:
+                    self.set_or_throw_if_exists(keyword_values, latest_keyword, None)
+                latest_keyword = arg[2:].replace('-', '_')
+                continue
+            if latest_keyword is not None:
+                self.set_or_throw_if_exists(keyword_values, latest_keyword, arg)
+                latest_keyword = None
+                continue
+            latest_keyword = None
+            positional_values.append(arg)
+        if latest_keyword is not None:
+            self.set_or_throw_if_exists(keyword_values, latest_keyword, None)
+
+        mapping: dict[ParsedArgument[Any], str] = {}
+        for key, value in keyword_values.items():
+            value = value if value is not None else '1'
+            argument = next((a for a in self.arguments if a.name == key), None)
+            if argument is None:
+                raise ValueError(f'Invalid argument "{key}"')
+            mapping[argument] = value
+
+        for value in positional_values:
+            argument = next((a for a in self.arguments if a not in mapping), None)
+            if argument is None:
+                raise ValueError('Too many positional arguments')
+            mapping[argument] = value
+
+        return mapping
 
     def use_argv(self) -> bool:
+        failed: bool = False
         argv_values: dict[ParsedArgument[Any], str] = self.fetch_argv_values()
         for argument, value in argv_values.items():
-            if argument.allow_none and value.lower() == 'none':
-                self.command_manager.do(SetCommand(
-                    argument=argument,
-                    after_string_value='',
-                    after_is_none=True,
-                    after_index=self.index,
-                    after_inner_index=self.inner_index,
-                ), builder=self)
+            try:
+                if argument.allow_none and value.lower() == 'none':
+                    argument.raw_set_string_value_and_is_none(
+                        '', True, builder=self,
+                    )
+                else:
+                    argument.raw_set_string_value_and_is_none(
+                        value, False, builder=self,
+                    )
+            except ValueError as exc:
+                print(colour(f'Error while using argv for "{argument.name}": {exc}', hex='#ff0000'))
+                failed = True
                 continue
-            self.command_manager.do(SetCommand(
-                argument=argument,
-                after_string_value=value,
-                after_is_none=False,
-                after_index=self.index,
-                after_inner_index=self.inner_index,
-            ), builder=self)
-            if not argument.value_is_valid(builder=self):
-                raise ValueError(f'Invalid value {value!r} for {argument.name}')
-        return bool(argv_values)
+        return not failed and bool(argv_values)
 
     def create_named_tuple(self) -> NT:
         if not all(a.value_is_valid(builder=self) for a in self.arguments):

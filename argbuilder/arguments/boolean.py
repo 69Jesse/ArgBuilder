@@ -18,6 +18,30 @@ class BooleanArgument(ParsedArgument[bool]):
         self.string_value = '1' if self.string_value == 'True' else '0' if self.string_value == 'False' else ''
         return super().after_init()
 
+    def raw_set_string_value_and_is_none(
+        self,
+        string_value: str,
+        is_none: bool,
+        *,
+        builder: 'Builder[Any]',
+    ) -> None:
+        if is_none:
+            self.string_value = ''
+            self.is_none = True
+            return
+        try:
+            char = string_value[0]
+        except IndexError:
+            raise ValueError('No value given')
+        if char in self.TRUE_CHARS:
+            self.string_value = '1'
+            self.is_none = False
+        elif char in self.FALSE_CHARS:
+            self.string_value = '0'
+            self.is_none = False
+        else:
+            raise ValueError('Invalid value')
+
     def raw_get_value(
         self,
         *,
