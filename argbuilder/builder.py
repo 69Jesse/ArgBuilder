@@ -120,6 +120,7 @@ class Builder(Generic[NT]):
         if should_use_argv():
             self.use_argv()
         self.inner_index = self.highest_inner_index_from_current_selected()
+        self.higher_inner_index = self.inner_index
 
     @staticmethod
     def from_named_tuple_cls(
