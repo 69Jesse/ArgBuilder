@@ -201,3 +201,4 @@ def clear_memory(builder: 'Builder[Any]') -> None:
     path = MEMORY_FOLDER / f'{name}.json'
     if path.exists():
         path.unlink()
+    print(f'Cleared memory for "{builder.name}"')
