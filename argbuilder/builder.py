@@ -113,14 +113,18 @@ class Builder(Generic[NT]):
         self.last_text_line_count = -1
         self.command_manager = CommandManager()
         self.previous_input = None
+        use_argv = should_use_argv()
         if should_clear_memory():
             clear_memory(self)
-        else:
+        elif not use_argv:
             maybe_remember_before(self)
-        if should_use_argv():
-            self.use_argv()
+        try_finish = False
+        if use_argv:
+            try_finish = self.use_argv()
         self.inner_index = self.highest_inner_index_from_current_selected()
         self.higher_inner_index = self.inner_index
+        if try_finish:
+            self.maybe_finish()
 
     @staticmethod
     def from_named_tuple_cls(

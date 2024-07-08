@@ -8,7 +8,7 @@ setup(
     name='argbuilder',
     author='Jesse Janssen',
     url='https://github.com/69Jesse/ArgBuilder',
-    version='0.4.1',
+    version='0.4.2',
     packages=find_packages(),
     description='Arguments builder for creating console applications',
     python_requires='>=3.12',
