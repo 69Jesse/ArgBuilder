@@ -123,7 +123,8 @@ class Builder(Generic[NT]):
             try_finish = self.use_argv()
         self.inner_index = self.highest_inner_index_from_current_selected()
         self.higher_inner_index = self.inner_index
-        if try_finish:
+        if try_finish and self.all_values_are_valid():
+            print(colour('Met conditions to parse arguments automatically', hex='#ff0000'))
             self.maybe_finish()
 
     @staticmethod
@@ -414,15 +415,18 @@ class Builder(Generic[NT]):
                 continue
         return not failed and bool(argv_values)
 
+    def all_values_are_valid(self) -> bool:
+        return all(a.value_is_valid(builder=self) for a in self.arguments)
+
     def create_named_tuple(self) -> NT:
-        if not all(a.value_is_valid(builder=self) for a in self.arguments):
+        if not self.all_values_are_valid():
             raise ValueError('Not all values are valid')
         return self.named_tuple_cls(
             **{a.field_name: a.get_value(builder=self) for a in self.arguments},  # type: ignore
         )
 
     def maybe_finish(self) -> None:
-        if all(a.value_is_valid(builder=self) for a in self.arguments):
+        if self.all_values_are_valid():
             self.on_finish()
 
     def on_finish(self) -> None:
