@@ -124,8 +124,7 @@ class Builder(Generic[NT]):
         self.inner_index = self.highest_inner_index_from_current_selected()
         self.higher_inner_index = self.inner_index
         if try_finish and self.all_values_are_valid():
-            print(colour('Met conditions to parse arguments automatically', hex='#ff0000'))
-            self.maybe_finish()
+            self.maybe_finish(is_beginning=True)
 
     @staticmethod
     def from_named_tuple_cls(
@@ -425,12 +424,14 @@ class Builder(Generic[NT]):
             **{a.field_name: a.get_value(builder=self) for a in self.arguments},  # type: ignore
         )
 
-    def maybe_finish(self) -> None:
+    def maybe_finish(self, *, is_beginning: bool = False) -> None:
         if self.all_values_are_valid():
-            self.on_finish()
+            self.on_finish(is_beginning=is_beginning)
 
-    def on_finish(self) -> None:
+    def on_finish(self, *, is_beginning: bool) -> None:
         self.finished = True
         self.index = -1
         maybe_remember_after(self)
+        if is_beginning:
+            print(f'\n{colour(f'[{colour('!', hex='#00ff00')}] Met requirements to parse arguments automatically', hex='#f7f7f9')}')
         self.display()
