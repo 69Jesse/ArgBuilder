@@ -45,6 +45,8 @@ class ParsedArgument(ABC, Generic[Value]):
     options: Optional[list[Value]]
     flags: list['Flag']
     remember: Optional[bool | int]
+    prefix: Optional[str]
+    suffix: Optional[str]
     def __init__(
         self,
         *,
@@ -57,6 +59,8 @@ class ParsedArgument(ABC, Generic[Value]):
         options: Optional[list[Value]],
         flags: Optional[list['Flag']],
         remember: Optional[bool | int],
+        prefix: Optional[str],
+        suffix: Optional[str],
     ) -> None:
         self.name = name
         self.description = description

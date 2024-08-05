@@ -193,6 +193,8 @@ class Builder(Generic[NT]):
                     options=unparsed.options,  # type: ignore
                     flags=unparsed.flags,
                     remember=unparsed.remember,
+                    prefix=unparsed.prefix,
+                    suffix=unparsed.suffix,
                 )
                 arguments.append(argument)
             except ValueError as exc:
@@ -247,6 +249,11 @@ class Builder(Generic[NT]):
         name: str = argument.formatted_name(forced_colour='#0095e9' if selected else None) + ' ' * (self.biggest_argument_length - len(argument.name))
         ok: str = colour(f'[{colour('OK', hex=('#00ff00' if is_valid else '#f7f7f9'), background_hex=(None if is_valid else '#ff0000'))}]', hex='#f7f7f9')
         displayed = colour(displayed, hex='#f7f7f9')
+        if not argument.is_none:
+            if argument.prefix is not None:
+                displayed = colour(argument.prefix, hex='#545454') + displayed
+            if argument.suffix is not None:
+                displayed += colour(argument.suffix, hex='#545454')
 
         line: str = f' {prefix} {type_string} {name} {ok} {displayed}'
         escaped: str = self.ansi_escape(line)

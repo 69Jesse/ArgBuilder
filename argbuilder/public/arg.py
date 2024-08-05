@@ -34,6 +34,8 @@ def arg(
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
     remember: bool | int = MISSING,
+    prefix: str = MISSING,
+    suffix: str = MISSING,
 ) -> T:
     ...
 
@@ -49,6 +51,8 @@ def arg(
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
     remember: bool | int = MISSING,
+    prefix: str = MISSING,
+    suffix: str = MISSING,
 ) -> Optional[T]:
     ...
 
@@ -64,6 +68,8 @@ def arg(
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
     remember: bool | int = MISSING,
+    prefix: str = MISSING,
+    suffix: str = MISSING,
 ) -> Optional[T]:
     ...
 
@@ -78,6 +84,8 @@ def arg(
     flag: Flag = MISSING,
     flags: Flag | Iterable[Flag] = MISSING,
     remember: bool | int = MISSING,
+    prefix: str = MISSING,
+    suffix: str = MISSING,
 ) -> Optional[T]:
     """Creates an argument for the argument parser.
 
@@ -103,6 +111,10 @@ def arg(
     remember: Union[:class:`bool`, :class:`int`]
         Indicates if the argument should be remembered.
         If an integer is provided, it is the number of seconds the argument should be remembered for.
+    prefix: :class:`str`
+        An optional prefix that is added in front of the entered argument, purely for display purposes.
+    suffix: :class:`str`
+        An optional suffix that is added after the entered argument, purely for display purposes.
 
     Returns
     ---------
@@ -135,6 +147,8 @@ def arg(
         flag=flag,
         flags=flags,
         remember=remember,
+        prefix=prefix,
+        suffix=suffix,
     )
     return argument  # type: ignore
 
