@@ -251,9 +251,9 @@ class Builder(Generic[NT]):
         displayed = colour(displayed, hex='#f7f7f9')
         if not argument.is_none:
             if argument.prefix is not None:
-                displayed = colour(argument.prefix, hex='#bdbdbf') + displayed
+                displayed = colour(argument.prefix, hex='#6a6a6a') + displayed
             if argument.suffix is not None:
-                displayed += colour(argument.suffix, hex='#bdbdbf')
+                displayed += colour(argument.suffix, hex='#6a6a6a')
 
         line: str = f' {prefix} {type_string} {name} {ok} {displayed}'
         escaped: str = self.ansi_escape(line)
