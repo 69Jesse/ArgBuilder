@@ -74,6 +74,8 @@ class ParsedArgument(ABC, Generic[Value]):
         self.options = options
         self.flags = flags or []
         self.remember = remember
+        self.prefix = prefix
+        self.suffix = suffix
         self.after_init()
 
     def after_init(self) -> None:
