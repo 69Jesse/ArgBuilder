@@ -170,6 +170,7 @@ class ParsedArgument(ABC, Generic[Value]):
         display = self.raw_display(builder=builder)
         for flag in self.flags:
             display = flag.maybe_change_display(self, display, builder=builder)
+        display = display.replace('\t', ' ')  # TODO: proper tab handling? seems to be fine for now
         return display
 
     def one_letter_highlight(
